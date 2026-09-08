@@ -1,9 +1,15 @@
 name: te-transcripts
+
 channels:
-  - bioconda
   - conda-forge
+  - bioconda
+  - nodefaults
+
 dependencies:
   - python=3.10
   - snakemake-minimal>=8
   - pandas>=2
-  - tetranscripts=2.2.1
+  - tetranscripts=2.2.4
+  - pip
+  - pip:
+      - TElocal==1.1.3
