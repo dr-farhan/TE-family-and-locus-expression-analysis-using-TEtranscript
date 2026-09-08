@@ -103,7 +103,7 @@ rule telocal_locus:
 
 rule merge_family_counts:
     input:
-        tables=expand(family_table, sample=SAMPLES)
+        tables=[family_table(s) for s in SAMPLES]
     output:
         te="results/family/count_matrices/te_family_counts.tsv",
         genes="results/family/count_matrices/gene_counts.tsv"
@@ -115,7 +115,7 @@ rule merge_family_counts:
 
 rule merge_locus_counts:
     input:
-        tables=expand(locus_table, sample=SAMPLES)
+        tables=[locus_table(s) for s in SAMPLES]
     output:
         te="results/locus/count_matrices/te_locus_counts.tsv",
         genes="results/locus/count_matrices/gene_counts.tsv"
