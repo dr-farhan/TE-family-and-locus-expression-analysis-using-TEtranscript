@@ -15,7 +15,7 @@ cd TE-family-and-locus-expression-analysis-using-TEtranscript
 mamba env create \
     -f envs/te-transcripts.yaml
 
-mamba activate te-transcripts
+conda activate te-transcripts
 ```
 
 If your site provides TEtranscripts through a module, activate Snakemake separately and set `software.tecount` and `software.telocal` in `config/config.yaml`.
