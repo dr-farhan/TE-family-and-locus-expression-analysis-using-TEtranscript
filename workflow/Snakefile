@@ -1,5 +1,8 @@
 import os
+import sys
 import pandas as pd
+
+PYTHON = sys.executable
 
 samples_path = config["samples"]
 samples = pd.read_csv(samples_path, sep="\t", dtype=str).fillna("")
@@ -50,8 +53,8 @@ rule validate_inputs:
     output:
         touch("results/.inputs_validated")
     shell:
-        "python scripts/validate_inputs.py {input.samples} {input.genes} {input.family} {input.locus} "
-        "{input.bams}"
+    "{PYTHON} scripts/validate_inputs.py {input.samples} {input.genes} {input.family} {input.locus} "
+    "{input.bams}"
 
 rule tecount_family:
     input:
@@ -110,7 +113,7 @@ rule merge_family_counts:
     log:
         "logs/family/merge_counts.log"
     shell:
-        "python scripts/merge_tecount_tables.py --input-files {input.tables} "
+        "{PYTHON} scripts/merge_tecount_tables.py--input-files {input.tables} "
         "--te-output {output.te} --gene-output {output.genes} > {log} 2>&1"
 
 rule merge_locus_counts:
@@ -122,5 +125,5 @@ rule merge_locus_counts:
     log:
         "logs/locus/merge_counts.log"
     shell:
-        "python scripts/merge_tecount_tables.py --input-files {input.tables} "
+        "{PYTHON} scripts/merge_tecount_tables.py --input-files {input.tables} "
         "--te-output {output.te} --gene-output {output.genes} > {log} 2>&1"
