@@ -7,8 +7,6 @@ Snakemake workflow for quantifying transposable element (TE) expression from coo
 
 For every sample in `config/samples.tsv`, the workflow runs `TEcount` for TE family quantification, runs `TElocal` for individual locus quantification, and collects per-sample tables into count matrices. 
 
-No FASTQ, BAM, annotation, or project-specific path is included in this repository.
-
 ## Installation
 
 ```bash
