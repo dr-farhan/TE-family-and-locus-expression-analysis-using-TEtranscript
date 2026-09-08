@@ -42,6 +42,7 @@ rule all:
         "results/family/count_matrices/gene_counts.tsv",
         "results/locus/count_matrices/te_locus_counts.tsv",
         "results/locus/count_matrices/gene_counts.tsv"
+    default_target: True
 
 rule validate_inputs:
     input:
