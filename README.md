@@ -12,7 +12,10 @@ For every sample in `config/samples.tsv`, the workflow runs `TEcount` for TE fam
 ```bash
 git clone https://github.com/dr-farhan/TE-family-and-locus-expression-analysis-using-TEtranscript.git
 cd TE-family-and-locus-expression-analysis-using-TEtranscript
-mamba env create -f envs/te-transcripts.yaml
+mamba env create \
+    -f envs/te-transcripts.yaml \
+    --strict-channel-priority
+
 mamba activate te-transcripts
 ```
 
