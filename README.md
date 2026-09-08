@@ -1,5 +1,3 @@
-/home/sahmad/.bashrc: line 41: unexpected EOF while looking for matching `"'
-/home/sahmad/.bashrc: line 42: syntax error: unexpected end of file
 # TE family and locus expression analysis with TEtranscripts
 
 Reproducible Snakemake workflow for quantifying transposable element (TE) expression from coordinate-sorted RNA-seq BAM files at both the TE family level (`TEcount`) and individual locus level (`TElocal`). The workflow preserves the analysis settings used in the originating analysis while exposing all dataset-specific inputs through a small configuration file.

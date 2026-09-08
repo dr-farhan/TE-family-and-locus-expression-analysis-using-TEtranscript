@@ -1,0 +1,126 @@
+import os
+import pandas as pd
+
+samples_path = config["samples"]
+samples = pd.read_csv(samples_path, sep="\t", dtype=str).fillna("")
+if samples.empty:
+    raise ValueError(f"Sample sheet is empty: {samples_path}")
+required_columns = {"sample", "bam"}
+missing = required_columns.difference(samples.columns)
+if missing:
+    raise ValueError(f"Sample sheet is missing columns: {sorted(missing)}")
+if samples["sample"].duplicated().any():
+    raise ValueError("Sample names must be unique")
+SAMPLES = samples["sample"].tolist()
+BAMS = dict(zip(samples["sample"], samples["bam"]))
+
+THREADS = int(config["resources"].get("threads", 16))
+MEMORY_MB = int(config["resources"].get("memory_mb", 32000))
+RUNTIME = int(config["resources"].get("runtime_minutes", 540))
+STRANDED = config["quantification"].get("stranded", "reverse")
+MODE = config["quantification"].get("mode", "multi")
+SORT_BY_POSITION = bool(config["quantification"].get("sort_by_position", True))
+
+GENES_GTF = config["annotations"]["genes_gtf"]
+TE_FAMILY_GTF = config["annotations"]["te_family_gtf"]
+TE_LOCUS_GTF = config["annotations"]["te_locus_gtf"]
+TECOUNT = config["software"].get("tecount", "TEcount")
+TELOCAL = config["software"].get("telocal", "TElocal")
+
+def family_table(sample):
+    return f"results/family/per_sample/{sample}.cntTable"
+
+def locus_table(sample):
+    return f"results/locus/per_sample/{sample}.cntTable"
+
+rule all:
+    input:
+        "results/family/count_matrices/te_family_counts.tsv",
+        "results/family/count_matrices/gene_counts.tsv",
+        "results/locus/count_matrices/te_locus_counts.tsv",
+        "results/locus/count_matrices/gene_counts.tsv"
+
+rule validate_inputs:
+    input:
+        samples=samples_path,
+        bams=[BAMS[s] for s in SAMPLES],
+        genes=GENES_GTF,
+        family=TE_FAMILY_GTF,
+        locus=TE_LOCUS_GTF
+    output:
+        touch("results/.inputs_validated")
+    shell:
+        "python scripts/validate_inputs.py {input.samples} {input.genes} {input.family} {input.locus} "
+        "{input.bams}"
+
+rule tecount_family:
+    input:
+        bam=lambda wildcards: BAMS[wildcards.sample],
+        genes=GENES_GTF,
+        te=TE_FAMILY_GTF,
+        validated="results/.inputs_validated"
+    output:
+        table=family_table("{sample}")
+    params:
+        project=lambda wildcards, output: output.table.removesuffix(".cntTable"),
+        output_dir=lambda wildcards: os.path.dirname(family_table(wildcards.sample)),
+        sort_flag="--sortByPos" if SORT_BY_POSITION else "",
+        tecount=TECOUNT
+    threads: THREADS
+    resources:
+        mem_mb=MEMORY_MB,
+        runtime=RUNTIME
+    log:
+        "logs/family/{sample}.log"
+    shell:
+        "mkdir -p {params.output_dir} && {params.tecount} {params.sort_flag} --format BAM --mode {MODE} "
+        "-b {input.bam} --GTF {input.genes} --TE {input.te} "
+        "--stranded {STRANDED} --project {params.project} > {log} 2>&1"
+
+rule telocal_locus:
+    input:
+        bam=lambda wildcards: BAMS[wildcards.sample],
+        genes=GENES_GTF,
+        te=TE_LOCUS_GTF,
+        validated="results/.inputs_validated"
+    output:
+        table=locus_table("{sample}")
+    params:
+        project=lambda wildcards, output: output.table.removesuffix(".cntTable"),
+        output_dir=lambda wildcards: os.path.dirname(locus_table(wildcards.sample)),
+        sort_flag="--sortByPos" if SORT_BY_POSITION else "",
+        telocal=TELOCAL
+    threads: THREADS
+    resources:
+        mem_mb=MEMORY_MB,
+        runtime=RUNTIME
+    log:
+        "logs/locus/{sample}.log"
+    shell:
+        "mkdir -p {params.output_dir} && {params.telocal} {params.sort_flag} --mode {MODE} "
+        "-b {input.bam} --GTF {input.genes} --TE {input.te} "
+        "--stranded {STRANDED} --project {params.project} > {log} 2>&1"
+
+rule merge_family_counts:
+    input:
+        tables=expand(family_table, sample=SAMPLES)
+    output:
+        te="results/family/count_matrices/te_family_counts.tsv",
+        genes="results/family/count_matrices/gene_counts.tsv"
+    log:
+        "logs/family/merge_counts.log"
+    shell:
+        "python scripts/merge_tecount_tables.py --input-files {input.tables} "
+        "--te-output {output.te} --gene-output {output.genes} > {log} 2>&1"
+
+rule merge_locus_counts:
+    input:
+        tables=expand(locus_table, sample=SAMPLES)
+    output:
+        te="results/locus/count_matrices/te_locus_counts.tsv",
+        genes="results/locus/count_matrices/gene_counts.tsv"
+    log:
+        "logs/locus/merge_counts.log"
+    shell:
+        "python scripts/merge_tecount_tables.py --input-files {input.tables} "
+        "--te-output {output.te} --gene-output {output.genes} > {log} 2>&1"

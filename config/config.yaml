@@ -1,0 +1,20 @@
+samples: config/samples.tsv
+
+annotations:
+  genes_gtf: /path/to/genes.gtf
+  te_family_gtf: /path/to/te_family.gtf
+  te_locus_gtf: /path/to/te_locus.gtf.locInd
+
+quantification:
+  stranded: reverse
+  mode: multi
+  sort_by_position: true
+
+resources:
+  threads: 16
+  runtime_minutes: 540
+  memory_mb: 32000
+
+software:
+  tecount: TEcount
+  telocal: TElocal
